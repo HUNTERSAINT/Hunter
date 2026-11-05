@@ -49,7 +49,7 @@ Discord never waits for long tasks: commands reply immediately and results are p
    npm run deploy:commands
    ```
 5. **Run it:** `npm run dev`
-6. **Set up your server.** As an administrator run `/admin config channel` for each feed: `jobs`, `bounties`, `ambassadors`, `research`, `analysis`, `ecosystem`, `digests`, `networking`. Nothing is posted to a feed until its channel is set.
+6. **Set up your server.** As an administrator run `/admin setup`. It creates the categories and channels (named like `🎙️ » job-talk-voice-room`), sets their permissions, connects every feed and posts the button menu. The bot needs Manage Channels. Or map feeds by hand with `/admin config channel` for each: `jobs`, `bounties`, `ambassadors`, `research`, `analysis`, `ecosystem`, `digests`, `networking`. Nothing is posted to a feed until its channel is set.
 
 Suggested channels, from the plan: announcements, server-rules, job-alerts, bounties-and-gigs, ambassador-programs, project-research, project-analysis, ecosystem-updates, applications-and-submissions, resources-and-learning, networking, general-chat and the two voice rooms. Create them yourself, then map the feeds above.
 

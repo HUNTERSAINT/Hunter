@@ -96,6 +96,7 @@ export function adminPanel() {
         button("hja:research_off", "Research off", "⚪"),
         button("hja:pause", "Pause bot", "⏸️", ButtonStyle.Danger),
         button("hja:resume", "Resume bot", "▶️", ButtonStyle.Success),
+        button("hja:setup", "Set up server", "🏗️", ButtonStyle.Primary),
       ),
       row(
         button("hja:report_daily", "Daily report", "🗞️"),

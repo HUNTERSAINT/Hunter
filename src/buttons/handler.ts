@@ -70,6 +70,7 @@ const ADMIN_DIRECT: Record<string, CommandSpec> = {
   pending: { commandName: "admin", group: "opportunities", sub: "pending" },
   sources: { commandName: "admin", group: "sources", sub: "list" },
   scan: { commandName: "admin", group: "sources", sub: "scan" },
+  setup: { commandName: "admin", sub: "setup" },
   pause: { commandName: "admin", sub: "pause" },
   resume: { commandName: "admin", sub: "resume" },
   research_on: { commandName: "admin", group: "config", sub: "research", values: { enabled: true } },

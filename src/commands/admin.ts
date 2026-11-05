@@ -9,6 +9,7 @@ import {
 } from "discord.js";
 import { announceNewOpportunities } from "../automation/announce.js";
 import { adminPanel, memberPanel } from "../buttons/panels.js";
+import { setupServer } from "../services/serverSetup.js";
 import { postDigest, type DigestPeriod } from "../automation/digests.js";
 import { automationQueue, runAutomationNow } from "../automation/scheduler.js";
 import { config } from "../config.js";
@@ -340,7 +341,34 @@ const controls: Handler = async (interaction) => {
   await interaction.editReply(adminPanel());
 };
 
+const setup: Handler = async (interaction, guildId) => {
+  const guild = interaction.guild ?? (await interaction.client.guilds.fetch(guildId));
+  const voice = interaction.options.getBoolean("voice") ?? true;
+  await interaction.editReply("Setting up channels. This takes a few seconds.");
+  const r = await setupServer(guild, interaction.client.user.id, { voice });
+
+  if (r.missingPermissions.length) {
+    await interaction.editReply(
+      `I need these permissions first: **${r.missingPermissions.join(", ")}**. Give my role those (or Administrator), then run \`/admin setup\` again.`,
+    );
+    return;
+  }
+  const list = (items: string[]) => (items.length ? items.map((i) => `• ${i}`).join("\n") : "none");
+  const embed = new EmbedBuilder()
+    .setColor(r.failed.length ? 0xfee75c : 0x57f287)
+    .setTitle("Server setup finished")
+    .addFields(
+      { name: `Created (${r.created.length})`, value: clip(list(r.created), 1000) },
+      { name: `Already existed (${r.reused.length})`, value: clip(list(r.reused), 1000) },
+      { name: "Feeds connected", value: clip(list(r.mapped), 1000) },
+    )
+    .setFooter({ text: "Feed channels are read-only for members. Only the bot posts there." });
+  if (r.failed.length) embed.addFields({ name: "Problems", value: clip(list(r.failed), 1000) });
+  await interaction.editReply({ content: "", embeds: [embed] });
+};
+
 const HANDLERS: Record<string, Handler> = {
+  setup,
   panel: panelPost,
   controls,
   "config/view": configView,
@@ -505,6 +533,12 @@ const command: Command = {
     .addSubcommand((s) => s.setName("analytics").setDescription("Usage, queues, failures and estimated AI cost"))
     .addSubcommand((s) => s.setName("pause").setDescription("Pause the bot on this server"))
     .addSubcommand((s) => s.setName("resume").setDescription("Resume the bot on this server"))
+    .addSubcommand((s) =>
+      s
+        .setName("setup")
+        .setDescription("Create every channel and category the bot needs, with permissions, and connect the feeds")
+        .addBooleanOption((o) => o.setName("voice").setDescription("Also create the voice rooms (default: yes)")),
+    )
     .addSubcommand((s) => s.setName("panel").setDescription("Post the member button menu in this channel"))
     .addSubcommand((s) => s.setName("controls").setDescription("Open these admin settings as buttons")),
 
