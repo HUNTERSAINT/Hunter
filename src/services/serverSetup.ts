@@ -1,5 +1,6 @@
 import {
   ChannelType,
+  EmbedBuilder,
   PermissionFlagsBits as P,
   type CategoryChannel,
   type Guild,
@@ -68,6 +69,92 @@ export const LAYOUT: CategorySpec[] = [
     ],
   },
 ];
+
+type Intro = { about: string; commands: string[] };
+
+/** The welcome message posted in each channel when it is first created. */
+const INTROS: Record<string, Intro> = {
+  "start-here": {
+    about: "Your starting point. Tap the buttons below to use the bot. Only you see the answers.",
+    commands: ["`/menu` Open the button menu any time", "`/help` See everything the bot can do"],
+  },
+  "bot-commands": {
+    about: "Use the bot here, so other channels stay clean. Everything you run is private to you.",
+    commands: [
+      "`/research` Full AI research on a project",
+      "`/compare` Compare two projects",
+      "`/jobs` `/ambassadors` `/bounties` Find open opportunities",
+      "`/match` Listings that fit your profile",
+      "`/profile` Set your skills and CV",
+      "`/apply` Cover letters, DMs, interview prep",
+      "`/track` Track applications and deadlines",
+      "`/scamcheck` Check an offer or link",
+      "`/menu` Everything as buttons",
+    ],
+  },
+  "admin-controls": {
+    about: "Private to administrators. Manage the bot from here.",
+    commands: [
+      "`/admin controls` Admin buttons",
+      "`/admin analytics` Usage and estimated AI cost",
+      "`/admin opportunities pending` Review listings waiting for approval",
+      "`/admin config` Channels, cooldowns and limits",
+      "`/admin pause` and `/admin resume`",
+      "`/admin setup` Create or repair channels",
+    ],
+  },
+  "content-studio": {
+    about: "Private to administrators. Results from the creator tools are posted here so you can copy them.",
+    commands: [
+      "`/studio` Creator buttons",
+      "`/reply` Reply options for a tweet",
+      "`/kol` Full KOL package for a project",
+      "`/batch` A scheduled trading and Web3 content pack",
+    ],
+  },
+  "job-alerts": {
+    about: "New Web3 jobs, posted by the bot after checks. Members can't post here.",
+    commands: ["`/jobs` Search jobs yourself", "`/watch` Get a DM when a project posts something new", "`/saved` Keep listings for later"],
+  },
+  "ambassador-programs": {
+    about: "Ambassador and contributor programs, posted by the bot.",
+    commands: ["`/ambassadors` Search programs yourself", "`/apply` Draft your application answers", "`/track` Track where you applied"],
+  },
+  "bounties-and-gigs": {
+    about: "Bounties, paid gigs and grants, posted by the bot.",
+    commands: ["`/bounties` Search bounties yourself", "`/share` Share one you found and earn points", "`/scamcheck` Check anything that looks off"],
+  },
+  "project-research": {
+    about: "Research reports from `/research` appear here. Verified facts and project claims are kept separate.",
+    commands: ["`/research` Research a project", "`/projects` Search saved research", "`/watch` Follow a project"],
+  },
+  "project-analysis": {
+    about: "Project comparisons and deeper analysis.",
+    commands: ["`/compare` Compare two projects for different kinds of contributors", "`/content` Content ideas for a project"],
+  },
+  "ecosystem-updates": {
+    about: "Changes to projects people are watching, and ecosystem news.",
+    commands: ["`/watch` Follow a project", "`/unwatch` Stop following", "`/trending` What the community is watching"],
+  },
+  digests: {
+    about: "Daily, weekly and monthly summaries of new opportunities and activity.",
+    commands: ["`/digest` Get a summary on demand", "`/trending` What's popular now"],
+  },
+  networking: {
+    about: "Introduce yourself and meet other members. You earn points for your first introduction.",
+    commands: ["`/introduce` Post your introduction", "`/members` Find members by skill", "`/leaderboard` See top contributors"],
+  },
+};
+
+function introEmbed(spec: ChannelSpec): EmbedBuilder | null {
+  const intro = INTROS[spec.name];
+  if (!intro) return null;
+  return new EmbedBuilder()
+    .setColor(0x5865f2)
+    .setTitle(`${spec.emoji} ${spec.name}`)
+    .setDescription(intro.about)
+    .addFields({ name: "Commands", value: intro.commands.join("\n") });
+}
 
 const label = (emoji: string, name: string) => `${emoji}${SEP}${name}`;
 
@@ -207,8 +294,13 @@ export async function setupServer(guild: Guild, botId: string, opts: { voice: bo
           // The analysis feed also covers comparisons; nothing else to map.
         }
 
-        if (spec.menu && channel.isTextBased() && isNew) {
-          await (channel as TextChannel).send(memberPanel());
+        if (isNew && channel.isTextBased() && spec.access !== "voice") {
+          const embed = introEmbed(spec);
+          if (embed) {
+            const intro = await (channel as TextChannel).send({ embeds: [embed] });
+            await intro.pin().catch(() => undefined);
+          }
+          if (spec.menu) await (channel as TextChannel).send(memberPanel());
         }
       } catch (err) {
         result.failed.push(`${name}: ${(err as Error).message}`);
