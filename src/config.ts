@@ -17,7 +17,7 @@ const schema = z
   // "openai" (paid) or "gemini" (free key from aistudio.google.com).
   AI_PROVIDER: z.enum(["openai", "gemini"]).default("openai"),
   GEMINI_API_KEY: z.string().default(""),
-  GEMINI_MODEL: z.string().default("gemini-2.5-flash"),
+  GEMINI_MODEL: z.string().default("gemini-3.8-flash"),
 
   OPENAI_API_KEY: z.string().default(""),
   OPENAI_MODEL: z.string().default("gpt-4.1"),
