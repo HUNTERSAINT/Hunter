@@ -20,6 +20,8 @@ const schema = z
   // Free web search (https://tavily.com) used with Gemini, because Google Search grounding is not free.
   TAVILY_API_KEY: z.string().default(""),
   GEMINI_MODEL: z.string().default("gemini-3.8-flash"),
+  // Tried in order when the main model is out of free quota or overloaded. Each model has its own daily allowance.
+  GEMINI_FALLBACK_MODELS: z.string().default("gemini-3-flash-preview,gemini-3.1-flash-lite-preview,gemini-flash-lite-latest"),
 
   OPENAI_API_KEY: z.string().default(""),
   OPENAI_MODEL: z.string().default("gpt-4.1"),

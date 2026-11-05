@@ -103,8 +103,30 @@ type GeminiResponse = {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+async function callGeminiModel(model: string, body: string): Promise<{ data?: GeminiResponse; retryNext: boolean; detail: string }> {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+  let detail = "";
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-goog-api-key": config.GEMINI_API_KEY },
+      body,
+      signal: AbortSignal.timeout(120_000),
+    });
+    if (res.ok) return { data: (await res.json()) as GeminiResponse, retryNext: false, detail: "" };
+    detail = ((await res.json().catch(() => ({}))) as GeminiResponse).error?.message ?? res.statusText;
+    if (res.status === 503 && attempt === 0) {
+      await sleep(3000);
+      continue;
+    }
+    // Out of quota, overloaded or retired: try the next model. Anything else is a real error.
+    if (res.status === 429 || res.status === 503 || res.status === 404) return { retryNext: true, detail };
+    throw new Error(`Gemini request failed (${res.status}): ${detail}`);
+  }
+  return { retryNext: true, detail };
+}
+
 async function viaGemini(opts: GenerateOptions): Promise<{ result: AiResult; usage: Usage }> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(config.GEMINI_MODEL)}:generateContent`;
   const body = JSON.stringify({
     systemInstruction: { parts: [{ text: opts.instructions }] },
     contents: [{ role: "user", parts: [{ text: opts.input }] }],
@@ -112,30 +134,25 @@ async function viaGemini(opts: GenerateOptions): Promise<{ result: AiResult; usa
     generationConfig: { maxOutputTokens: opts.maxOutputTokens ?? 8192, temperature: 0.3 },
   });
 
+  const models = [config.GEMINI_MODEL, ...config.GEMINI_FALLBACK_MODELS.split(",").map((m) => m.trim())].filter(
+    (m, i, all) => m && all.indexOf(m) === i,
+  );
+
   let data: GeminiResponse | undefined;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-goog-api-key": config.GEMINI_API_KEY },
-      body,
-      signal: AbortSignal.timeout(120_000),
-    });
-    if (res.ok) {
-      data = (await res.json()) as GeminiResponse;
+  const failures: string[] = [];
+  for (const model of models) {
+    const out = await callGeminiModel(model, body);
+    if (out.data) {
+      data = out.data;
+      if (failures.length) logger.info({ model, skipped: failures.length }, "Gemini fallback model used");
       break;
     }
-    const detail = ((await res.json().catch(() => ({}))) as GeminiResponse).error?.message ?? res.statusText;
-    if ((res.status === 429 || res.status >= 500) && attempt < 2) {
-      await sleep(4000 * (attempt + 1));
-      continue;
-    }
-    if (res.status === 429) {
-      logger.warn({ detail, model: config.GEMINI_MODEL, search: !!opts.search }, "Gemini quota error");
-      throw new Error(`The free AI quota is used up for now. Please try again later. [Google said: ${detail.slice(0, 400)}]`);
-    }
-    throw new Error(`Gemini request failed (${res.status}): ${detail}`);
+    failures.push(`${model}: ${out.detail.slice(0, 160)}`);
   }
-  if (!data) throw new Error("Gemini returned no response.");
+  if (!data) {
+    logger.warn({ failures }, "All Gemini models unavailable");
+    throw new Error(`The free AI quota is used up for now. Please try again later. [${failures.join(" | ").slice(0, 600)}]`);
+  }
 
   const candidate = data.candidates?.[0];
   if (!candidate) {
