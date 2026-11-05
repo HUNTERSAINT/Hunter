@@ -1,0 +1,40 @@
+{
+  "name": "web3-job-hunters-ai",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "prisma generate && tsc",
+    "start": "prisma db push --skip-generate && node dist/index.js",
+    "start:bot": "node dist/index.js",
+    "deploy:commands": "tsx src/deploy-commands.ts",
+    "deploy:commands:prod": "node dist/deploy-commands.js",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.0.0",
+    "@sentry/node": "^8.40.0",
+    "bullmq": "^5.0.0",
+    "discord.js": "^14.16.0",
+    "dotenv": "^16.4.5",
+    "fastify": "^5.0.0",
+    "ioredis": "^5.4.1",
+    "openai": "^4.104.0",
+    "pino": "^9.5.0",
+    "prisma": "^6.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

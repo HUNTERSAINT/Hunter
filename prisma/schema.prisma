@@ -1,0 +1,294 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Members ----------
+
+model Member {
+  id                String             @id @default(cuid())
+  discordId         String             @unique
+  username          String?
+  skills            String[]
+  experienceLevel   String?
+  preferredRoles    String[]
+  ecosystems        String[]
+  portfolioUrl      String?
+  githubUrl         String?
+  workArrangement   String?
+  salaryExpectation String?
+  cvText            String?
+  introduction      String?
+  discoverable      Boolean            @default(false)
+  points            Int                @default(0)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  requests          ResearchRequest[]
+  submissions       Opportunity[]      @relation("Submitted")
+  saved             SavedOpportunity[]
+  watches           Watch[]
+  applications      Application[]
+  pointEvents       PointEvent[]
+}
+
+model PointEvent {
+  id        String   @id @default(cuid())
+  memberId  String
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  points    Int
+  reason    String
+  createdAt DateTime @default(now())
+
+  @@index([memberId, createdAt])
+  @@index([createdAt])
+}
+
+// ---------- Research ----------
+
+model Project {
+  id                String            @id @default(cuid())
+  slug              String            @unique
+  name              String
+  website           String?
+  report            Json
+  overallConfidence String?
+  researchedAt      DateTime
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  requests          ResearchRequest[]
+  snapshots         ProjectSnapshot[]
+}
+
+model ProjectSnapshot {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  report    Json
+  createdAt DateTime @default(now())
+
+  @@index([projectId, createdAt])
+}
+
+enum RequestKind {
+  RESEARCH
+  COMPARE
+  DISCOVER
+}
+
+enum RequestStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model ResearchRequest {
+  id          String        @id @default(cuid())
+  kind        RequestKind
+  query       String
+  queryB      String?
+  force       Boolean       @default(false)
+  status      RequestStatus @default(QUEUED)
+  channelId   String
+  memberId    String
+  member      Member        @relation(fields: [memberId], references: [id])
+  projectId   String?
+  project     Project?      @relation(fields: [projectId], references: [id])
+  error       String?
+  createdAt   DateTime      @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  @@index([memberId, createdAt])
+  @@index([status])
+}
+
+// ---------- Opportunities ----------
+
+enum OpportunityType {
+  JOB
+  AMBASSADOR
+  BOUNTY
+  GRANT
+}
+
+enum OpportunityStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum RewardType {
+  CASH
+  TOKEN
+  POINTS
+  GRANT
+  UNPAID
+  UNKNOWN
+}
+
+model Opportunity {
+  id                 String             @id @default(cuid())
+  ref                Int                @unique @default(autoincrement())
+  type               OpportunityType
+  title              String
+  projectName        String
+  projectSlug        String
+  description        String             @default("")
+  category           String?
+  location           String?
+  remote             Boolean?
+  compensation       String?
+  rewardType         RewardType         @default(UNKNOWN)
+  experience         String?
+  entryLevel         Boolean            @default(false)
+  noDegree           Boolean            @default(false)
+  eligibility        String?
+  responsibilities   String?
+  applicationProcess String?
+  deadline           DateTime?
+  applyUrl           String?
+  sourceUrl          String?
+  isOpen             Boolean            @default(true)
+  verified           Boolean            @default(false)
+  scamRisk           String             @default("none")
+  scamNotes          String?
+  status             OpportunityStatus  @default(PENDING)
+  dedupeKey          String             @unique
+  lastVerifiedAt     DateTime           @default(now())
+  notifiedAt         DateTime?
+  closingNotifiedAt  DateTime?
+  submittedById      String?
+  submittedBy        Member?            @relation("Submitted", fields: [submittedById], references: [id])
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  saved              SavedOpportunity[]
+  applications       Application[]
+
+  @@index([type, status, isOpen])
+  @@index([projectSlug])
+  @@index([createdAt])
+}
+
+model SavedOpportunity {
+  id            String      @id @default(cuid())
+  memberId      String
+  member        Member      @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  opportunityId String
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+
+  @@unique([memberId, opportunityId])
+}
+
+model Watch {
+  id          String   @id @default(cuid())
+  memberId    String
+  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  projectSlug String
+  projectName String
+  createdAt   DateTime @default(now())
+
+  @@unique([memberId, projectSlug])
+  @@index([projectSlug])
+}
+
+// ---------- Applications ----------
+
+enum ApplicationStatus {
+  SAVED
+  PREPARING
+  APPLIED
+  ASSESSMENT
+  INTERVIEW
+  ACCEPTED
+  REJECTED
+}
+
+model Application {
+  id                 String             @id @default(cuid())
+  ref                Int                @unique @default(autoincrement())
+  memberId           String
+  member             Member             @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  opportunityId      String?
+  opportunity        Opportunity?       @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  title              String
+  company            String
+  status             ApplicationStatus  @default(SAVED)
+  deadline           DateTime?
+  followUpAt         DateTime?
+  notes              String?
+  links              String[]
+  deadlineRemindedAt DateTime?
+  followUpRemindedAt DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  events             ApplicationEvent[]
+
+  @@index([memberId, status])
+}
+
+model ApplicationEvent {
+  id            String            @id @default(cuid())
+  applicationId String
+  application   Application       @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  status        ApplicationStatus
+  note          String?
+  createdAt     DateTime          @default(now())
+
+  @@index([applicationId, createdAt])
+}
+
+// ---------- Admin, automation and monitoring ----------
+
+model GuildSettings {
+  guildId         String   @id
+  autoResearch    Boolean  @default(true)
+  paused          Boolean  @default(false)
+  cooldownSeconds Int?
+  dailyLimit      Int?
+  channels        Json     @default("{}")
+  roleRewards     Json     @default("{}")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Source {
+  id            String           @id @default(cuid())
+  ref           Int              @unique @default(autoincrement())
+  label         String
+  url           String
+  type          OpportunityType?
+  enabled       Boolean          @default(true)
+  lastScannedAt DateTime?
+  lastError     String?
+  createdAt     DateTime         @default(now())
+}
+
+model JobRun {
+  id         String    @id @default(cuid())
+  name       String
+  status     String    @default("running")
+  error      String?
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  @@index([startedAt])
+}
+
+model UsageLog {
+  id           String   @id @default(cuid())
+  kind         String
+  model        String
+  inputTokens  Int
+  outputTokens Int
+  webSearches  Int      @default(0)
+  estCostUsd   Float
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+}
