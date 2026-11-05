@@ -67,6 +67,10 @@ One service runs the bot, both workers and the API. Split the workers into their
 
 Every command is also a button. Members type `/menu` (private) and tap through research, jobs, ambassadors, bounties, profile, drafts, tracker, scam check and more; anything that needs typing opens a small form. Admins run `/admin panel` to post the menu in a channel for everyone, and `/admin controls` for the admin buttons (analytics, settings, pending listings, approve/reject, channels, cooldown, limits, pause, scans, reports).
 
+## Free AI option
+
+Set `AI_PROVIDER=gemini` and `GEMINI_API_KEY` (free from https://aistudio.google.com). Web research then uses Gemini with Google Search. The free quota is small and set by Google, so keep the cooldown and daily limits on. Set `AI_PROVIDER=openai` with `OPENAI_API_KEY` to use OpenAI instead.
+
 ## Costs and limits
 
 Web research and scans use OpenAI credits on every run. Controls:

@@ -7,13 +7,19 @@ const flag = z
   .transform((v) => v === "true");
 const optionalString = z.string().optional().or(z.literal(""));
 
-const schema = z.object({
+const schema = z
+  .object({
   DISCORD_TOKEN: z.string().min(1),
   DISCORD_CLIENT_ID: z.string().min(1),
   DISCORD_GUILD_ID: optionalString,
   RESEARCH_CHANNEL_ID: optionalString,
 
-  OPENAI_API_KEY: z.string().min(1),
+  // "openai" (paid) or "gemini" (free key from aistudio.google.com).
+  AI_PROVIDER: z.enum(["openai", "gemini"]).default("openai"),
+  GEMINI_API_KEY: z.string().default(""),
+  GEMINI_MODEL: z.string().default("gemini-2.5-flash"),
+
+  OPENAI_API_KEY: z.string().default(""),
   OPENAI_MODEL: z.string().default("gpt-4.1"),
   // Used only for the cost estimates shown in /admin analytics. Update them if your pricing differs.
   OPENAI_INPUT_COST_PER_M: z.coerce.number().default(2),
@@ -37,7 +43,15 @@ const schema = z.object({
 
   PORT: z.coerce.number().int().default(3000),
   LOG_LEVEL: z.string().default("info"),
-});
+  })
+  .superRefine((v, ctx) => {
+    if (v.AI_PROVIDER === "openai" && !v.OPENAI_API_KEY) {
+      ctx.addIssue({ code: "custom", path: ["OPENAI_API_KEY"], message: "Required when AI_PROVIDER=openai" });
+    }
+    if (v.AI_PROVIDER === "gemini" && !v.GEMINI_API_KEY) {
+      ctx.addIssue({ code: "custom", path: ["GEMINI_API_KEY"], message: "Required when AI_PROVIDER=gemini" });
+    }
+  });
 
 const parsed = schema.safeParse(process.env);
 

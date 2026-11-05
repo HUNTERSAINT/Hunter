@@ -1,7 +1,5 @@
-import type OpenAI from "openai";
-import { config } from "../config.js";
 import { extractJson } from "../utils.js";
-import { openai, trackUsage } from "./client.js";
+import { generate } from "./client.js";
 import {
   comparisonSchema,
   reportSchema,
@@ -62,45 +60,19 @@ You are given two research reports as JSON. Use only what is in them; do not add
 
 Cover these dimensions: Technology, Funding, Team credibility, Product maturity, Ecosystem growth, Contributor opportunities, Career opportunities. Keep each string under 250 characters.`;
 
-type Citation = { title: string; url: string };
-
-/** Collects url_citation annotations from a Responses API result. */
-function collectCitations(response: OpenAI.Responses.Response): Citation[] {
-  const found = new Map<string, Citation>();
-  for (const item of response.output) {
-    if (item.type !== "message") continue;
-    for (const part of item.content) {
-      if (part.type !== "output_text") continue;
-      for (const annotation of part.annotations ?? []) {
-        if (annotation.type === "url_citation" && annotation.url) {
-          found.set(annotation.url, {
-            title: annotation.title || annotation.url,
-            url: annotation.url,
-          });
-        }
-      }
-    }
-  }
-  return [...found.values()];
-}
-
 export async function runResearch(query: string): Promise<ResearchReport> {
   const today = new Date().toISOString().slice(0, 10);
 
-  const response = await openai.responses.create({
-    model: config.OPENAI_MODEL,
+  const { text, citations } = await generate({
+    kind: "research",
     instructions: RESEARCH_INSTRUCTIONS,
     input: `Today's date: ${today}\nResearch this Web3 project: ${query}`,
-    // The tool name is "web_search_preview" on current openai SDK 4.x releases.
-    // If your SDK version uses "web_search", change it here and in src/ai/opportunities.ts.
-    tools: [{ type: "web_search_preview" }],
+    search: true,
   });
-  await trackUsage("research", response);
 
-  const report = reportSchema.parse(extractJson(response.output_text));
+  const report = reportSchema.parse(extractJson(text));
 
   // Prefer real citations returned by the search tool over URLs the model typed out.
-  const citations = collectCitations(response);
   if (citations.length > 0) {
     report.sources = citations.slice(0, 12);
   }
@@ -111,11 +83,10 @@ export async function runComparison(
   a: ResearchReport,
   b: ResearchReport,
 ): Promise<Comparison> {
-  const response = await openai.responses.create({
-    model: config.OPENAI_MODEL,
+  const { text } = await generate({
+    kind: "comparison",
     instructions: COMPARE_INSTRUCTIONS,
     input: JSON.stringify({ projectA: a, projectB: b }),
   });
-  await trackUsage("comparison", response);
-  return comparisonSchema.parse(extractJson(response.output_text));
+  return comparisonSchema.parse(extractJson(text));
 }

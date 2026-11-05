@@ -1,7 +1,6 @@
 import type { OpportunityType } from "@prisma/client";
-import { config } from "../config.js";
 import { extractJson } from "../utils.js";
-import { openai, trackUsage } from "./client.js";
+import { generate } from "./client.js";
 import { parseDiscovered, type OpportunityInput } from "./opportunitySchema.js";
 
 const TYPE_BRIEF: Record<OpportunityType, string> = {
@@ -72,13 +71,12 @@ export async function discoverOpportunities(args: {
     lines.push(`Start from this page and follow its links to individual listings: ${args.sourceUrl}`);
   }
 
-  const response = await openai.responses.create({
-    model: config.OPENAI_MODEL,
+  const { text } = await generate({
+    kind: "discovery",
     instructions: DISCOVERY_INSTRUCTIONS,
     input: lines.join("\n"),
-    tools: [{ type: "web_search_preview" }],
+    search: true,
   });
-  await trackUsage("discovery", response);
 
-  return parseDiscovered(extractJson(response.output_text));
+  return parseDiscovered(extractJson(text));
 }
