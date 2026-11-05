@@ -86,6 +86,26 @@ export const MODALS: Record<string, ModalSpec> = {
       { id: "cv", label: "CV or short background", paragraph: true, required: false, max: 4000 },
     ],
   },
+  c_reply: {
+    title: "Reply pack",
+    inputs: [{ id: "tweet", label: "Paste the tweet", paragraph: true, required: true, max: 1500 }],
+  },
+  c_kol: {
+    title: "KOL package",
+    inputs: [
+      { id: "project", label: "Project name", required: true, max: 200 },
+      { id: "links", label: "Links: website, Telegram, X, docs, application", paragraph: true, required: false, max: 1000 },
+      { id: "notes", label: "Extra notes (optional)", paragraph: true, required: false, max: 500 },
+    ],
+  },
+  c_batch: {
+    title: "Content batch",
+    inputs: [
+      { id: "days", label: "How many days? 1 to 3", required: false, max: 1 },
+      { id: "focus", label: "Focus: balanced, trading or web3", required: false, max: 10 },
+      { id: "notes", label: "Anything to include or avoid (optional)", paragraph: true, required: false, max: 500 },
+    ],
+  },
   a_approve: {
     title: "Approve a listing",
     inputs: [{ id: "ref", label: "Listing number", required: true, max: 9 }],

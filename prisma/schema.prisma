@@ -292,3 +292,14 @@ model UsageLog {
 
   @@index([createdAt])
 }
+
+/** Topics already used in /batch packs, so new batches don't repeat them. */
+model ContentBatch {
+  id        String   @id @default(cuid())
+  discordId String
+  days      Int
+  topics    String[]
+  createdAt DateTime @default(now())
+
+  @@index([discordId, createdAt])
+}

@@ -102,6 +102,7 @@ export function adminPanel() {
         button("hja:report_daily", "Daily report", "🗞️"),
         button("hja:report_weekly", "Weekly report", "📅"),
         button("hja:report_monthly", "Monthly report", "📆"),
+        button("hja:studio", "Creator studio", "✍️", ButtonStyle.Primary),
       ),
     ],
   };
@@ -110,4 +111,24 @@ export function adminPanel() {
 /** A single follow-up button, used after saving the first part of a profile. */
 export function profileMoreRow() {
   return row(button("hj:profile2", "Add more details", "➕"));
+}
+
+/** Creator tools for administrators. Each button opens a small form. */
+export function studioPanel() {
+  const embed = new EmbedBuilder()
+    .setColor(0x9b59b6)
+    .setTitle("✍️ Creator studio")
+    .setDescription(
+      "**Reply pack:** best reply, quote idea and more for any tweet.\n**KOL package:** research, verdict, article, thread, covers, playbook, application answers and a Notion row.\n**Content batch:** a scheduled pack of trading and Web3 posts with 10 replies each.",
+    );
+  return {
+    embeds: [embed],
+    components: [
+      row(
+        button("hj:c_reply", "Reply pack", "💬", ButtonStyle.Primary),
+        button("hj:c_kol", "KOL package", "🕵️", ButtonStyle.Primary),
+        button("hj:c_batch", "Content batch", "📅", ButtonStyle.Primary),
+      ),
+    ],
+  };
 }

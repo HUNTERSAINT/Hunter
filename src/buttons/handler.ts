@@ -62,6 +62,9 @@ const OPEN_MODAL: Record<string, string> = {
   track_add: "track_add",
   profile_edit: "profile",
   profile2: "profile2",
+  c_reply: "c_reply",
+  c_kol: "c_kol",
+  c_batch: "c_batch",
 };
 
 const ADMIN_DIRECT: Record<string, CommandSpec> = {
@@ -71,6 +74,7 @@ const ADMIN_DIRECT: Record<string, CommandSpec> = {
   sources: { commandName: "admin", group: "sources", sub: "list" },
   scan: { commandName: "admin", group: "sources", sub: "scan" },
   setup: { commandName: "admin", sub: "setup" },
+  studio: { commandName: "studio" },
   pause: { commandName: "admin", sub: "pause" },
   resume: { commandName: "admin", sub: "resume" },
   research_on: { commandName: "admin", group: "config", sub: "research", values: { enabled: true } },
@@ -300,6 +304,16 @@ async function onModal(interaction: ModalSubmitInteraction): Promise<void> {
       return run(interaction, {
         commandName: "share",
         values: { type: arg, title: f("title"), project: f("project"), link: f("link"), details: f("details") },
+      });
+
+    case "c_reply":
+      return run(interaction, { commandName: "reply", values: { tweet: f("tweet") } });
+    case "c_kol":
+      return run(interaction, { commandName: "kol", values: { project: f("project"), links: f("links"), notes: f("notes") } });
+    case "c_batch":
+      return run(interaction, {
+        commandName: "batch",
+        values: { days: Number(f("days")) || 1, focus: f("focus"), notes: f("notes") },
       });
 
     case "a_approve":

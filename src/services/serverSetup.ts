@@ -35,6 +35,7 @@ export const LAYOUT: CategorySpec[] = [
     channels: [
       { emoji: "🧭", name: "start-here", access: "feed", menu: true, topic: "Tap a button to use the bot. Only you see the answers." },
       { emoji: "💬", name: "bot-commands", access: "commands", topic: "Use /menu or any slash command here." },
+      { emoji: "✍️", name: "content-studio", access: "admin", feed: "studio", topic: "Private. Reply packs, KOL packages and content batches land here." },
       { emoji: "🛠️", name: "admin-controls", access: "admin", topic: "Administrators only. Use /admin controls." },
     ],
   },

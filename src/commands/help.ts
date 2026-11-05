@@ -51,6 +51,15 @@ const command: Command = {
           ].join("\n"),
         },
         {
+          name: "Creator studio (admins)",
+          value: [
+            "`/studio` Buttons for the tools below",
+            "`/reply` Reply options for a tweet",
+            "`/kol` Full KOL package for a project",
+            "`/batch` A scheduled trading + Web3 content pack",
+          ].join("\n"),
+        },
+        {
           name: "How to read research",
           value:
             "**Verified** means confirmed by a primary or independent source. **Project claims** are stated by the project and not independently confirmed. Everything here is AI-assisted and can be wrong, so double-check before acting. Never pay to apply or share a seed phrase.",
