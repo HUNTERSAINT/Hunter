@@ -3,7 +3,7 @@ import {
   PermissionFlagsBits as P,
   type CategoryChannel,
   type Guild,
-  type GuildBasedChannel,
+  type NonThreadGuildBasedChannel,
   type OverwriteResolvable,
   type TextChannel,
 } from "discord.js";
@@ -142,7 +142,7 @@ export async function setupServer(guild: Guild, botId: string, opts: { voice: bo
   if (result.missingPermissions.length) return result;
 
   const all = await guild.channels.fetch();
-  const existing = [...all.values()].filter((c): c is GuildBasedChannel => c !== null);
+  const existing = [...all.values()].filter((c) => c !== null) as NonThreadGuildBasedChannel[];
   const settings = await getGuildSettings(guild.id);
   const feeds: Record<string, string> = { ...(channelMap(settings) as Record<string, string>) };
   const known = new Set(Object.values(feeds));
