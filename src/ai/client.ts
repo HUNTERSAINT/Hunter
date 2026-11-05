@@ -128,7 +128,8 @@ async function viaGemini(opts: GenerateOptions): Promise<{ result: AiResult; usa
       continue;
     }
     if (res.status === 429) {
-      throw new Error("The free AI quota is used up for now. Please try again later.");
+      logger.warn({ detail, model: config.GEMINI_MODEL, search: !!opts.search }, "Gemini quota error");
+      throw new Error(`The free AI quota is used up for now. Please try again later. [Google said: ${detail.slice(0, 400)}]`);
     }
     throw new Error(`Gemini request failed (${res.status}): ${detail}`);
   }
