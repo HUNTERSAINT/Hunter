@@ -1,4 +1,4 @@
-import { Client, Events, GatewayIntentBits, MessageFlags } from "discord.js";
+import { Client, Events, GatewayIntentBits, MessageFlags, REST, Routes } from "discord.js";
 import { automationQueue, registerSchedules } from "./automation/scheduler.js";
 import { startAutomationWorker } from "./automation/worker.js";
 import { handleComponent } from "./buttons/handler.js";
@@ -19,8 +19,20 @@ await initMonitoring();
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 const commandMap = new Map(commands.map((c) => [c.data.name, c]));
 
-client.once(Events.ClientReady, (c) => {
+client.once(Events.ClientReady, async (c) => {
   logger.info(`Logged in as ${c.user.tag}`);
+  // Keep the slash commands in sync on every start, so there is no separate registration step.
+  try {
+    const rest = new REST({ version: "10" }).setToken(config.DISCORD_TOKEN);
+    const body = commands.map((cmd) => cmd.data.toJSON());
+    const route = config.DISCORD_GUILD_ID
+      ? Routes.applicationGuildCommands(config.DISCORD_CLIENT_ID, config.DISCORD_GUILD_ID)
+      : Routes.applicationCommands(config.DISCORD_CLIENT_ID);
+    await rest.put(route, { body });
+    logger.info(`Registered ${body.length} slash commands`);
+  } catch (err) {
+    reportError(err, { step: "register-commands" });
+  }
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
