@@ -55,6 +55,19 @@ Rules:
 
 If you find nothing that qualifies, return { "opportunities": [] }.`;
 
+const QUERY_BY_TYPE: Record<OpportunityType, string> = {
+  JOB: "Web3 crypto jobs hiring open positions remote",
+  AMBASSADOR: "Web3 ambassador program open applications community contributor",
+  BOUNTY: "Web3 bounties paid gigs open now",
+  GRANT: "Web3 ecosystem grants open applications builders",
+};
+
+function discoveryQueries(type: OpportunityType | undefined, focus: string | undefined): string[] {
+  const year = new Date().getFullYear();
+  const bases = type ? [QUERY_BY_TYPE[type]] : [QUERY_BY_TYPE.JOB, QUERY_BY_TYPE.AMBASSADOR, QUERY_BY_TYPE.BOUNTY];
+  return bases.map((b) => `${b} ${focus ?? ""} ${year}`.replace(/\s+/g, " ").trim());
+}
+
 /** Searches the web for open opportunities. Results are validated, but not yet stored. */
 export async function discoverOpportunities(args: {
   type?: OpportunityType;
@@ -76,6 +89,7 @@ export async function discoverOpportunities(args: {
     instructions: DISCOVERY_INSTRUCTIONS,
     input: lines.join("\n"),
     search: true,
+    searchQueries: discoveryQueries(args.type, args.focus),
   });
 
   return parseDiscovered(extractJson(text));

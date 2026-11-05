@@ -16,6 +16,8 @@ type GenerateOptions = {
   input: string;
   /** Let the model search the web. */
   search?: boolean;
+  /** Queries for the separate web search service (used with Gemini when TAVILY_API_KEY is set). */
+  searchQueries?: string[];
   maxOutputTokens?: number;
 };
 
@@ -157,9 +159,63 @@ async function viaGemini(opts: GenerateOptions): Promise<{ result: AiResult; usa
   };
 }
 
+// ---------- Tavily web search (free tier) ----------
+
+type TavilyResult = { title?: string; url?: string; content?: string };
+
+async function tavilySearch(query: string): Promise<TavilyResult[]> {
+  const res = await fetch("https://api.tavily.com/search", {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: `Bearer ${config.TAVILY_API_KEY}` },
+    body: JSON.stringify({ query, search_depth: "basic", max_results: 6, include_answer: false }),
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (!res.ok) {
+    logger.warn({ status: res.status, body: (await res.text()).slice(0, 300) }, "Tavily search failed");
+    return [];
+  }
+  return (((await res.json()) as { results?: TavilyResult[] }).results ?? []).filter((r) => r.url);
+}
+
+/** Gemini plus Tavily: fetch web results first, then let Gemini write the answer from them. */
+async function viaGeminiWithTavily(opts: GenerateOptions): Promise<{ result: AiResult; usage: Usage }> {
+  const queries = (opts.searchQueries ?? []).slice(0, 3);
+  const batches = await Promise.all(queries.map((q) => tavilySearch(q).catch(() => [])));
+
+  const seen = new Map<string, TavilyResult>();
+  for (const r of batches.flat()) if (r.url && !seen.has(r.url)) seen.set(r.url, r);
+  const results = [...seen.values()].slice(0, 14);
+
+  const context = results.length
+    ? results.map((r, i) => `[${i + 1}] ${r.title ?? r.url}\nURL: ${r.url}\n${(r.content ?? "").slice(0, 700)}`).join("\n\n")
+    : "(The web search returned nothing.)";
+
+  const { result, usage } = await viaGemini({
+    ...opts,
+    search: false,
+    instructions:
+      opts.instructions +
+      "\n\nWeb search results are provided below the task. Base every factual claim on them. Anything they do not support is unknown. Use only URLs that appear in the results.",
+    input: `${opts.input}\n\n=== WEB SEARCH RESULTS ===\n${context}`,
+  });
+  return {
+    result: {
+      text: result.text,
+      citations: results.map((r) => ({ title: r.title || r.url!, url: r.url! })),
+    },
+    usage: { ...usage, webSearches: queries.length },
+  };
+}
+
 /** One model call on whichever provider is configured (AI_PROVIDER). */
 export async function generate(opts: GenerateOptions): Promise<AiResult> {
-  const { result, usage } = config.AI_PROVIDER === "gemini" ? await viaGemini(opts) : await viaOpenAI(opts);
+  const useTavily = config.AI_PROVIDER === "gemini" && opts.search && !!config.TAVILY_API_KEY && !!opts.searchQueries?.length;
+  const { result, usage } =
+    config.AI_PROVIDER === "gemini"
+      ? useTavily
+        ? await viaGeminiWithTavily(opts)
+        : await viaGemini(opts)
+      : await viaOpenAI(opts);
   await trackUsage(opts.kind, usage);
   return result;
 }

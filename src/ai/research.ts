@@ -68,6 +68,11 @@ export async function runResearch(query: string): Promise<ResearchReport> {
     instructions: RESEARCH_INSTRUCTIONS,
     input: `Today's date: ${today}\nResearch this Web3 project: ${query}`,
     search: true,
+    searchQueries: [
+      `${query} crypto project official website what is it`,
+      `${query} team funding investors audit security`,
+      `${query} careers ambassador program bounties grants`,
+    ],
   });
 
   const report = reportSchema.parse(extractJson(text));

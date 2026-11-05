@@ -69,7 +69,7 @@ Every command is also a button. Members type `/menu` (private) and tap through r
 
 ## Free AI option
 
-Set `AI_PROVIDER=gemini` and `GEMINI_API_KEY` (free from https://aistudio.google.com). Web research then uses Gemini with Google Search. The free quota is small and set by Google, so keep the cooldown and daily limits on. Set `AI_PROVIDER=openai` with `OPENAI_API_KEY` to use OpenAI instead.
+Set `AI_PROVIDER=gemini` and `GEMINI_API_KEY` (free from https://aistudio.google.com). Google Search grounding is not free, so also set `TAVILY_API_KEY` (free at https://tavily.com, about 1,000 searches a month): the bot fetches web results with Tavily and Gemini writes the report from them. Keep the cooldown and daily limits on. Set `AI_PROVIDER=openai` with `OPENAI_API_KEY` to use OpenAI instead.
 
 ## Costs and limits
 
