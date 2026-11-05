@@ -2,6 +2,7 @@ import { Client, Events, GatewayIntentBits, MessageFlags, REST, Routes } from "d
 import { automationQueue, registerSchedules } from "./automation/scheduler.js";
 import { startAutomationWorker } from "./automation/worker.js";
 import { handleComponent } from "./buttons/handler.js";
+import { diagnoseGemini } from "./ai/diagnose.js";
 import { commands } from "./commands/index.js";
 import { config } from "./config.js";
 import { prisma } from "./db.js";
@@ -21,6 +22,7 @@ const commandMap = new Map(commands.map((c) => [c.data.name, c]));
 
 client.once(Events.ClientReady, async (c) => {
   logger.info(`Logged in as ${c.user.tag}`);
+  if (config.AI_PROVIDER === "gemini") void diagnoseGemini();
   // Keep the slash commands in sync on every start, so there is no separate registration step.
   try {
     const rest = new REST({ version: "10" }).setToken(config.DISCORD_TOKEN);
