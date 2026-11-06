@@ -43,7 +43,7 @@ const command: Command = {
         focus,
         notes: interaction.options.getString("notes") ?? undefined,
       });
-      await deliver(interaction, `Content batch (${days} day${days > 1 ? "s" : ""})`, notes.length ? `${text}\n\n⚠️ ${notes.join(" ")}` : text);
+      await deliver(interaction, `📅 Batch ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Africa/Lagos" })} (${days} day${days > 1 ? "s" : ""})`, notes.length ? `${text}\n\n⚠️ ${notes.join(" ")}` : text);
     });
   },
 };

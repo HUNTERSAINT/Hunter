@@ -18,9 +18,6 @@ const schema = z
   AI_PROVIDER: z.enum(["openai", "gemini"]).default("openai"),
   GEMINI_API_KEY: z.string().default(""),
   // Free web search (https://tavily.com) used with Gemini, because Google Search grounding is not free.
-  // Optional: lets /kol add the tracker row straight into your Notion database.
-  NOTION_TOKEN: z.string().default(""),
-  NOTION_DATABASE_ID: z.string().default(""),
   TAVILY_API_KEY: z.string().default(""),
   GEMINI_MODEL: z.string().default("gemini-3.8-flash"),
   // Tried in order when the main model is out of free quota or overloaded. Each model has its own daily allowance.

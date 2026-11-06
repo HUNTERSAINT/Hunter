@@ -13,6 +13,7 @@ export const CHANNEL_KEYS = [
   "digests",
   "networking",
   "studio",
+  "tracker",
 ] as const;
 export type ChannelKey = (typeof CHANNEL_KEYS)[number];
 

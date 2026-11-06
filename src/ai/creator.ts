@@ -82,18 +82,18 @@ Short pitch message to send the team; promotion strategy (timing, posting cadenc
 6. AMBASSADOR / APPLICATION SUPPORT
 If an application link or questions were provided or found in the notes, list the questions and draft short, honest, natural answers for a trader and content creator (${HANDLE}, psychology and execution focus, real audience). Flag any red flags in the application. If no application info is available, say so and list the questions such programs usually ask, clearly labeled as typical, not confirmed.
 
-7. NOTION UPDATE (Web3 KOL Tracker)
+7. TRACKER ROW (Web3 KOL Tracker)
 Fill these fields: Project; Status (In Progress / Watchlist / Applied); Type (Thread, Article + Thread, Ambassadorship...); Category (Prop Firm / Web3 Project / KOL / Personal / Giveaway); Date Applied (use the date given); Campaign / Referral Link; Platform; Deliverables; Notes (concise research summary and key risks); Priority (High / Medium / Low); Tags; Next Action.
 Then one line: "Left blank for you: Link to Content, Engagements, Payment Amount / Status / Currency, Content Score, Rating, Follow-up Date, Contact Person."
 
-Finally, as the very last line, output the same Notion fields as ONE line of compact JSON in exactly this form (string values only, Notes under 1500 characters, Tags comma-separated, Date Applied as YYYY-MM-DD, leave unknown values as empty strings):
-NOTION_JSON: {"Project":"","Status":"","Type":"","Category":"","Date Applied":"","Campaign / Referral Link":"","Platform":"","Deliverables":"","Notes":"","Priority":"","Tags":"","Next Action":""}`;
+Finally, as the very last line, output the same tracker fields as ONE line of compact JSON in exactly this form (string values only, Notes under 1500 characters, Tags comma-separated, Date Applied as YYYY-MM-DD, leave unknown values as empty strings):
+TRACKER_JSON: {"Project":"","Status":"","Type":"","Category":"","Date Applied":"","Campaign / Referral Link":"","Platform":"","Deliverables":"","Notes":"","Priority":"","Tags":"","Next Action":""}`;
 
 export async function generateKol(args: {
   project: string;
   links?: string;
   notes?: string;
-}): Promise<{ text: string; notion: Record<string, string> | null }> {
+}): Promise<{ text: string; tracker: Record<string, string> | null }> {
   const today = new Date().toISOString().slice(0, 10);
   const firstLink = args.links?.match(/https?:\/\/\S+/)?.[0];
   const queries = [
@@ -130,18 +130,18 @@ export async function generateKol(args: {
   const sources = part1.citations.length
     ? `\n\nSOURCES\n${part1.citations.slice(0, 10).map((c) => `• ${c.title}: ${c.url}`).join("\n")}`
     : "";
-  let notion: Record<string, string> | null = null;
-  const match = part2.text.match(/^\s*NOTION_JSON:\s*(\{.*\})\s*$/m);
+  let tracker: Record<string, string> | null = null;
+  const match = part2.text.match(/^\s*TRACKER_JSON:\s*(\{.*\})\s*$/m);
   if (match) {
     try {
       const parsed = JSON.parse(match[1]) as Record<string, unknown>;
-      notion = Object.fromEntries(Object.entries(parsed).map(([k, v]) => [k, String(v ?? "")]));
+      tracker = Object.fromEntries(Object.entries(parsed).map(([k, v]) => [k, String(v ?? "")]));
     } catch {
-      notion = null;
+      tracker = null;
     }
   }
-  const part2Text = part2.text.replace(/^\s*NOTION_JSON:.*$/gm, "").trim();
-  return { text: `${part1.text.trim()}\n\n${part2Text}${sources}`, notion };
+  const part2Text = part2.text.replace(/^\s*TRACKER_JSON:.*$/gm, "").trim();
+  return { text: `${part1.text.trim()}\n\n${part2Text}${sources}`, tracker };
 }
 
 // ---------- /batch ----------

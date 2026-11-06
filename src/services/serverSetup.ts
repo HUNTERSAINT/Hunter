@@ -36,8 +36,15 @@ export const LAYOUT: CategorySpec[] = [
     channels: [
       { emoji: "🧭", name: "start-here", access: "feed", menu: true, topic: "Tap a button to use the bot. Only you see the answers." },
       { emoji: "💬", name: "bot-commands", access: "commands", topic: "Use /menu or any slash command here." },
-      { emoji: "✍️", name: "content-studio", access: "admin", feed: "studio", topic: "Private. Reply packs, KOL packages and content batches land here." },
       { emoji: "🛠️", name: "admin-controls", access: "admin", topic: "Administrators only. Use /admin controls." },
+    ],
+  },
+  {
+    emoji: "✍️",
+    name: "CREATOR STUDIO",
+    channels: [
+      { emoji: "✍️", name: "content-studio", access: "admin", feed: "studio", topic: "Private. Each reply pack, KOL package and content batch gets its own thread here." },
+      { emoji: "📒", name: "kol-tracker", access: "admin", feed: "tracker", topic: "Private. One tracker card per project from /kol." },
     ],
   },
   {
@@ -104,13 +111,19 @@ const INTROS: Record<string, Intro> = {
     ],
   },
   "content-studio": {
-    about: "Private to administrators. Results from the creator tools are posted here so you can copy them.",
+    about:
+      "Private to administrators. Every result from the creator tools gets its own thread here, so packages never get mixed together.",
     commands: [
       "`/studio` Creator buttons",
       "`/reply` Reply options for a tweet",
-      "`/kol` Full KOL package for a project",
+      "`/kol` Full KOL package for a project (thread here, card in kol-tracker)",
       "`/batch` A scheduled trading and Web3 content pack",
     ],
+  },
+  "kol-tracker": {
+    about:
+      "Private to administrators. Each `/kol` run adds one card here with everything for your KOL tracker. The fields marked ✍️ are blank for you to fill in after posting.",
+    commands: ["`/kol` Research a project and add its card", "Tip: use the search bar to find a project by name"],
   },
   "job-alerts": {
     about: "New Web3 jobs, posted by the bot after checks. Members can't post here.",
@@ -165,7 +178,7 @@ function overwrites(guild: Guild, botId: string, access: Access): OverwriteResol
   const everyone = guild.roles.everyone.id;
   const bot: OverwriteResolvable = {
     id: botId,
-    allow: [P.ViewChannel, P.SendMessages, P.EmbedLinks, P.ReadMessageHistory, P.AttachFiles],
+    allow: [P.ViewChannel, P.SendMessages, P.EmbedLinks, P.ReadMessageHistory, P.AttachFiles, P.CreatePublicThreads, P.SendMessagesInThreads],
   };
   switch (access) {
     case "feed":

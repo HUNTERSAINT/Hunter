@@ -20,7 +20,8 @@ const command: Command = {
     }
     await guarded(interaction, "reply", async () => {
       const text = await generateReplies(interaction.options.getString("tweet", true));
-      await deliver(interaction, "Reply pack", text);
+      const tweet = interaction.options.getString("tweet", true);
+      await deliver(interaction, `💬 ${tweet.replace(/\s+/g, " ").slice(0, 70)}`, text);
     });
   },
 };

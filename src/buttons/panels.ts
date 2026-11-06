@@ -119,7 +119,7 @@ export function studioPanel() {
     .setColor(0x9b59b6)
     .setTitle("✍️ Creator studio")
     .setDescription(
-      "**Reply pack:** best reply, quote idea and more for any tweet.\n**KOL package:** research, verdict, article, thread, covers, playbook, application answers and a Notion row.\n**Content batch:** a scheduled pack of trading and Web3 posts with 10 replies each.",
+      "**Reply pack:** best reply, quote idea and more for any tweet.\n**KOL package:** research, verdict, article, thread, covers, playbook, application answers and a tracker card.\n**Content batch:** a scheduled pack of trading and Web3 posts with 10 replies each.",
     );
   return {
     embeds: [embed],
